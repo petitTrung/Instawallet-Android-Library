@@ -1,4 +1,4 @@
-package com.paymium.instawallet;
+package com.paymium.instawallet.payment;
 
 import com.google.gson.annotations.SerializedName;
 

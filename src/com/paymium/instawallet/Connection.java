@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.regex.Matcher;
@@ -18,12 +19,13 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 
-
 import android.os.Build;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import com.paymium.instawallet.exception.ConnectionNotInitializedException;
+import com.paymium.instawallet.payment.Payment;
 
 
 public class Connection 
@@ -39,6 +41,9 @@ public class Connection
 	private String wallet_id;
 	
 	private boolean isPayment;
+	
+	private String address;
+	private BigDecimal balance;
 	
 	/**
 	 * Instantiates a new connection.
@@ -393,7 +398,7 @@ public class Connection
 		}
 	}
 	
-	public Address getAddress() throws IOException, ConnectionNotInitializedException 
+	public Address getAddressJson() throws IOException, ConnectionNotInitializedException 
 	{
 		Pattern pattern;
 		Matcher matcher;
@@ -415,6 +420,8 @@ public class Connection
 			
 			Address a = gson.fromJson(response, Address.class);
 			
+			this.setAddress(a.getAddress());
+			
 			return a;
 		}
 		else
@@ -425,7 +432,9 @@ public class Connection
 		}
 	}
 	
-	public Balance getBalance() throws IOException, ConnectionNotInitializedException 
+	
+	
+	public Balance getBalanceJson() throws IOException, ConnectionNotInitializedException 
 	{
 		Pattern pattern;
 		Matcher matcher;
@@ -447,6 +456,8 @@ public class Connection
 			
 			Balance a = gson.fromJson(response, Balance.class);
 			
+			this.setBalance(a.getBalance());
+			
 			return a;
 		}
 		else
@@ -461,5 +472,26 @@ public class Connection
 	{
 		return null;
 	}
+
+	public void setAddress(String address) 
+	{
+		this.address = address;
+	}
+
+	public void setBalance(BigDecimal balance) 
+	{
+		this.balance = balance;
+	}
+
+	public String getAddress()
+	{
+		return this.address;
+	}
+	
+	public BigDecimal getBalance()
+	{
+		return this.balance;
+	}
+	
 	
 }

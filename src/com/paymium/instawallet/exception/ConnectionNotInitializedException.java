@@ -1,7 +1,7 @@
 /*
  * 
  */
-package com.paymium.instawallet;
+package com.paymium.instawallet.exception;
 
 // TODO: Auto-generated Javadoc
 /**

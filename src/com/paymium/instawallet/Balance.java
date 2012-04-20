@@ -1,5 +1,7 @@
 package com.paymium.instawallet;
 
+import java.math.BigDecimal;
+
 import com.google.gson.annotations.SerializedName;
 
 public class Balance 
@@ -9,21 +11,13 @@ public class Balance
 	
 	
 	@SerializedName("balance")
-	private String balance;
+	private BigDecimal balance;
 
 
 	public Balance() 
 	{
 		super();
 		// TODO Auto-generated constructor stub
-	}
-
-
-	public Balance(boolean successful, String balance) 
-	{
-		super();
-		this.successful = successful;
-		this.balance = balance;
 	}
 
 
@@ -39,18 +33,17 @@ public class Balance
 	}
 
 
-	public String getBalance() 
+	public BigDecimal getBalance() 
 	{
 		return balance;
 	}
 
 
-	public void setBalance(String balance) 
+	public void setBalance(BigDecimal balance) 
 	{
 		this.balance = balance;
 	}
-	
-	
-	
+
+
 	
 }
