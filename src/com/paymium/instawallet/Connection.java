@@ -485,12 +485,27 @@ public class Connection
 
 	public String getAddress()
 	{
-		return this.address;
+		if (this.address != null)
+		{
+			return this.address;
+		}
+		else
+		{
+			return null;
+		}
+		
 	}
 	
 	public BigDecimal getBalance()
 	{
-		return this.balance;
+		if (this.balance != null)
+		{
+			return this.balance;
+		}
+		else
+		{
+			return null;
+		}
 	}
 	
 	
