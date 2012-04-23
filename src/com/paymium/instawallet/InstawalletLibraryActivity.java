@@ -2,15 +2,15 @@ package com.paymium.instawallet;
 
 import java.io.IOException;
 
+import android.app.Activity;
+import android.os.Bundle;
+import android.widget.TextView;
+
 import com.paymium.instawallet.exception.ConnectionNotInitializedException;
 import com.paymium.instawallet.json.NewWallet;
 import com.paymium.instawallet.wallet.Connection;
 import com.paymium.instawallet.wallet.Wallet;
 import com.paymium.instawallet.wallet.WalletsList;
-
-import android.app.Activity;
-import android.os.Bundle;
-import android.widget.TextView;
 
 public class InstawalletLibraryActivity extends Activity 
 {
@@ -30,7 +30,7 @@ public class InstawalletLibraryActivity extends Activity
         
         try 
         {
-        	for (int i = 0 ; i < 2 ; i++)
+        	for (int i = 0 ; i < 5 ; i++)
         	{
         		NewWallet newWallet = connection.createNewWallet();
     			
