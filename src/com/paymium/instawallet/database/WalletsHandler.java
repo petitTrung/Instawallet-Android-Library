@@ -33,9 +33,9 @@ public class WalletsHandler
 	private static final String TAG = "DBAdapter";
 	
 	private static final String DATABASE_CREATE = "CREATE TABLE " + TABLE_WALLETS + "(" + KEY_ID + " TEXT PRIMARY KEY,"								 
-																									+ KEY_ADDRESS + " TEXT NOT NULL,"
-																									+ KEY_BALANCE + " TEXT NOT NULL"
-																							  + ")";	
+																						+ KEY_ADDRESS + " TEXT NOT NULL,"
+																						+ KEY_BALANCE + " TEXT NOT NULL"
+																						+ ")";	
 	private DatabaseHelper DBHelper;
     private SQLiteDatabase db;
 	
@@ -126,7 +126,7 @@ public class WalletsHandler
 		this.open();
 	 
 	    Cursor cursor = db.query(TABLE_WALLETS, new String[] { KEY_ID, KEY_ADDRESS}, KEY_ID + "=?",
-	            														new String[] { id }, null, null, null, null);
+	            								new String[] { id }, null, null, null, null);
 	    if (cursor != null)
 	        cursor.moveToFirst();
 	 
@@ -197,7 +197,7 @@ public class WalletsHandler
 		value.put(KEY_BALANCE, wallet.getWallet_balance().toString());
 	 
 	    // updating row
-	    db.update(TABLE_WALLETS, value, KEY_ID + " = ?", new String[] { String.valueOf(wallet.getWallet_id()) });
+	    db.update(TABLE_WALLETS, value, KEY_ID + " = ?", new String[] { wallet.getWallet_id() });
 	    
 	    this.close();
 	}
@@ -208,7 +208,7 @@ public class WalletsHandler
 	{
 		this.open();
 		
-	    db.delete(TABLE_WALLETS, KEY_ID + " = ?", new String[] { String.valueOf(wallet.getWallet_id()) });
+	    db.delete(TABLE_WALLETS, KEY_ID + " = ?", new String[] { wallet.getWallet_id() });
 	    
 	    this.close();
 	}
