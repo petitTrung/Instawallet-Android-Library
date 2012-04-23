@@ -1,11 +1,10 @@
-package com.paymium.instawallet;
+package com.paymium.instawallet.wallet;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.regex.Matcher;
@@ -23,27 +22,28 @@ import android.os.Build;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.paymium.instawallet.constant.Constant;
 import com.paymium.instawallet.exception.ConnectionNotInitializedException;
-import com.paymium.instawallet.payment.Payment;
+import com.paymium.instawallet.json.Address;
+import com.paymium.instawallet.json.Balance;
+import com.paymium.instawallet.json.NewWallet;
+import com.paymium.instawallet.json.Payment;
 
 
 public class Connection 
 {
-	private String backendUrl;
-	
 	private static Connection instance;
 	
 	private Gson gson;
 	
 	private boolean isInitialized = false;
 	
-	private String wallet_id;
-	
 	private boolean isPayment;
 	
-	private String address;
-	private BigDecimal balance;
+	private boolean useGreenAddress;
+
 	
 	/**
 	 * Instantiates a new connection.
@@ -74,17 +74,9 @@ public class Connection
 
 		return Connection.instance;
 	}
-	
-	public Boolean isInitialized() 
-	{
-		return (isInitialized);
-	}
-	
-	public Connection initialize(String backendUrl, String wallet_id)
-	{
-		this.backendUrl = backendUrl;
-		this.wallet_id = wallet_id;
 
+	public Connection initialize()
+	{
 		GsonBuilder gsonBuilder = new GsonBuilder();
 
 		// TODO : Handle timezones properly
@@ -95,9 +87,9 @@ public class Connection
 		return (Connection.getInstance());
 	}
 	
-	private String getMethod(String path) throws IOException, ConnectionNotInitializedException 
+	private String getMethod(String url) throws IOException, ConnectionNotInitializedException 
 	{
-		if (!isInitialized()) 
+		if (!isInitialized) 
 		{
 			throw new ConnectionNotInitializedException("Connection has not been initialized");
 		}
@@ -110,7 +102,7 @@ public class Connection
 		        
 		        HttpClient http_client = new DefaultHttpClient();
 	        	
-		        HttpGet http_get = new HttpGet(this.backendUrl + path);
+		        HttpGet http_get = new HttpGet(url);
 		        http_get.setHeader("Accept", "application/json");
 
 		        
@@ -126,17 +118,17 @@ public class Connection
 				{
 					responseBuilder.append(line);
 				}
-				System.out.println("Return get : " + responseBuilder.toString());
+				System.out.println("Return get ( <= 2.2 ) : " + response.getStatusLine().getStatusCode() + " " + responseBuilder.toString());
 				
 				return (responseBuilder.toString());
 		    }
 			else
 			{
-				URL requestURL = new URL(this.backendUrl + path);
+				URL requestURL = new URL(url);
 				HttpURLConnection backendConnection = (HttpURLConnection) requestURL.openConnection();
 
 				backendConnection.setRequestProperty("Accept", "application/json");
-				backendConnection.setRequestMethod(HttpVerb.GET);
+				backendConnection.setRequestMethod(Constant.GET);
 				
 				if (backendConnection.getResponseCode() > 400)
 				{
@@ -151,11 +143,9 @@ public class Connection
 						errorBuilder.append(line);
 					}
 
-					//System.out.println("Code d'erreur : " + backendConnection.getResponseCode());
-					//System.out.println("Message d'erreur : " + errorBuilder.toString());
-					//System.out.println("Return : " + String.valueOf(backendConnection.getResponseCode()) + " " + errorBuilder.toString());
+					System.out.println("Return get ( > 2.2 ) : " + backendConnection.getResponseCode() + " " + errorBuilder.toString());
 					
-					return ("Resulat : " + String.valueOf(backendConnection.getResponseCode()) + " " + errorBuilder.toString());
+					return (errorBuilder.toString());
 
 				}
 				
@@ -174,11 +164,7 @@ public class Connection
 					}
 					backendConnection.disconnect();	
 					
-					//System.out.println("Code de succes :"+backendConnection.getResponseCode());
-					//System.out.println("Message de succes :"+responseBuilder.toString());
-					//System.out.println("Message de succes de la pagniation  (S'il existe) : "+backendConnection.getHeaderField("Pagination"));
-					//this.header = backendConnection.getHeaderField("Pagination");			
-					//System.out.println("Return " + responseBuilder.toString());
+					System.out.println("Return get ( > 2.2 ) : " + backendConnection.getResponseCode() + " " + responseBuilder.toString());
 					
 					return (responseBuilder.toString());
 				}
@@ -187,21 +173,22 @@ public class Connection
 		
 	}
 	
-	private String postMethod(String path, JsonObject jsonData) throws IOException, ConnectionNotInitializedException 
+	private String postMethod(String url, JsonObject jsonData) throws IOException, ConnectionNotInitializedException 
 	{
-		if (!isInitialized()) 
+		if (!isInitialized) 
 		{
 			throw new ConnectionNotInitializedException("Connection has not been initialized");
 		}
 		else
 		{
+			System.out.println("URL : " + url);
 			if (Integer.parseInt(Build.VERSION.SDK) <= Build.VERSION_CODES.FROYO) 
 			{
 				if (this.isPayment) 
 				{
 					if (jsonData == null) 
 					{
-						throw new IllegalArgumentException("Cannot POST with empty body");
+						throw new IllegalArgumentException("Cannot POST payment with empty body");
 					}
 					else
 					{
@@ -210,7 +197,7 @@ public class Connection
 			        	HttpClient http_client = new DefaultHttpClient();
 			        	http_client.getParams().setParameter("http.protocol.version",HttpVersion.HTTP_1_0);
 			        	
-						HttpPost http_post = new HttpPost(backendUrl + path);
+						HttpPost http_post = new HttpPost(url);
 						http_post.setHeader("Accept", "application/json");
 						http_post.setHeader("Content-Type", "application/json");
 
@@ -232,17 +219,18 @@ public class Connection
 						{
 							responseBuilder.append(line);
 						}
-						//System.out.println("Return post: " + responseBuilder.toString());
+						System.out.println("Return post ( <= 2.2 ) : " + response.getStatusLine().getStatusCode() + " "  + responseBuilder.toString());
 					
 						return (responseBuilder.toString());
 					}
 				}
+				
 				else
 				{
 					HttpClient http_client = new DefaultHttpClient();
 		        	http_client.getParams().setParameter("http.protocol.version",HttpVersion.HTTP_1_0);
 		        	
-					HttpPost http_post = new HttpPost(backendUrl + path);
+					HttpPost http_post = new HttpPost(url);
 					http_post.setHeader("Accept", "application/json");
 			
 					HttpResponse response = http_client.execute(http_post);
@@ -257,18 +245,19 @@ public class Connection
 					{
 						responseBuilder.append(line);
 					}
-					//System.out.println("Return post: " + responseBuilder.toString());
+					System.out.println("Return post ( <= 2.2 ) : " + response.getStatusLine().getStatusCode() + " "  + responseBuilder.toString());
 				
 					return (responseBuilder.toString());
 				}
 			}
 			else
 			{
-				URL requestURL = new URL(backendUrl + path);
+				URL requestURL = new URL(url);
 				HttpURLConnection backendConnection = (HttpURLConnection) requestURL.openConnection();
 
 				backendConnection.setRequestProperty("Accept", "application/json");
-				backendConnection.setRequestMethod(HttpVerb.POST);
+				backendConnection.setRequestMethod(Constant.POST);
+				backendConnection.setDoOutput(true);
 
 				String jsonString = null;
 				
@@ -276,7 +265,7 @@ public class Connection
 				{
 					if (jsonData == null) 
 					{
-						throw new IllegalArgumentException("Cannot POST with empty body");
+						throw new IllegalArgumentException("Cannot POST payment with empty body");
 					}
 					else
 					{
@@ -290,10 +279,14 @@ public class Connection
 				}
 				
 				// Send request
-				DataOutputStream dataOutputStream = new DataOutputStream(backendConnection.getOutputStream());
-				dataOutputStream.writeBytes(jsonString);
-				dataOutputStream.flush();
-				dataOutputStream.close();
+				if(this.isPayment)
+				{
+					DataOutputStream dataOutputStream = new DataOutputStream(backendConnection.getOutputStream());
+					dataOutputStream.writeBytes(jsonString);
+					dataOutputStream.flush();
+					dataOutputStream.close();
+				}
+				
 				
 				if (backendConnection.getResponseCode() > 400)
 				{
@@ -308,11 +301,9 @@ public class Connection
 						errorBuilder.append(line);
 					}
 
-					//System.out.println("Code d'erreur : " + backendConnection.getResponseCode());
-					//System.out.println("Message d'erreur : " + errorBuilder.toString());
-					//System.out.println("Return : " + String.valueOf(backendConnection.getResponseCode()) + " " + errorBuilder.toString());
+					System.out.println("Return post ( > 2.2 ) : " + backendConnection.getResponseCode() + " " + errorBuilder.toString());
 					
-					return ("Resulat : " + String.valueOf(backendConnection.getResponseCode()) + " " + errorBuilder.toString());
+					return (errorBuilder.toString());
 
 				}
 				
@@ -331,11 +322,7 @@ public class Connection
 					}
 					backendConnection.disconnect();	
 					
-					//System.out.println("Code de succes :"+backendConnection.getResponseCode());
-					//System.out.println("Message de succes :"+responseBuilder.toString());
-					//System.out.println("Message de succes de la pagniation  (S'il existe) : "+backendConnection.getHeaderField("Pagination"));
-					//this.header = backendConnection.getHeaderField("Pagination");			
-					//System.out.println("Return " + responseBuilder.toString());
+					System.out.println("Return post ( > 2.2 ) : " + backendConnection.getResponseCode() + " " + responseBuilder.toString());
 					
 					return (responseBuilder.toString());
 				}
@@ -343,35 +330,18 @@ public class Connection
 		}
 	}
 
-	public boolean isPayment() 
-	{
-		return isPayment;
-	}
-
-	public void setPayment(boolean isPayment) 
-	{
-		this.isPayment = isPayment;
-	}
 	
 	
-	
-	public String getWallet_id() 
-	{
-		return wallet_id;
-	}
 
-	public void setWallet_id(String wallet_id) 
-	{
-		this.wallet_id = wallet_id;
-	}
-
-	public NewWallet postNewWallet() throws IOException, ConnectionNotInitializedException 
+	public NewWallet createNewWallet() throws IOException, ConnectionNotInitializedException 
 	{
 		Pattern pattern;
 		Matcher matcher;
 		boolean successful,id;
 		
-		String response = this.postMethod("/new_wallet",null);
+		String response = this.postMethod(Constant.newWalletUrl,null);
+		
+		System.out.println(response);
 		
 		pattern = Pattern.compile("true");
 		matcher = pattern.matcher(response);
@@ -383,28 +353,27 @@ public class Connection
 		
 		if(successful && id)
 		{
-			System.out.println("SUCCESSFUL !!");
+			System.out.println("A new wallet was created !!");
 			
 			NewWallet a = gson.fromJson(response, NewWallet.class);
-			this.setWallet_id(a.getWallet_id());
 			
 			return a;
 		}
 		else
 		{
-			System.out.println("FAIL !!");
+			System.out.println("No wallet was created !!");
 			
 			return null;
 		}
 	}
 	
-	public Address getAddressJson() throws IOException, ConnectionNotInitializedException 
+	public Address getAddressJson(String wallet_id) throws IOException, ConnectionNotInitializedException 
 	{
 		Pattern pattern;
 		Matcher matcher;
 		boolean successful,address;
 		
-		String response = this.getMethod("/w/"+this.getWallet_id()+"/address");
+		String response = this.getMethod(Constant.addressUrl(wallet_id));
 		
 		pattern = Pattern.compile("true");
 		matcher = pattern.matcher(response);
@@ -416,17 +385,15 @@ public class Connection
 		
 		if(successful && address)
 		{
-			System.out.println("SUCCESSFUL !!");
+			System.out.println("Get an address !!");
 			
 			Address a = gson.fromJson(response, Address.class);
-			
-			this.setAddress(a.getAddress());
 			
 			return a;
 		}
 		else
 		{
-			System.out.println("FAIL !!");
+			System.out.println("No address was gotten !!");
 			
 			return null;
 		}
@@ -434,13 +401,13 @@ public class Connection
 	
 	
 	
-	public Balance getBalanceJson() throws IOException, ConnectionNotInitializedException 
+	public Balance getBalanceJson(String wallet_id) throws IOException, ConnectionNotInitializedException 
 	{
 		Pattern pattern;
 		Matcher matcher;
 		boolean successful,balance;
 		
-		String response = this.getMethod("/w/"+this.getWallet_id()+"/balance");
+		String response = this.getMethod(Constant.balanceUrl(wallet_id));
 		
 		pattern = Pattern.compile("true");
 		matcher = pattern.matcher(response);
@@ -452,61 +419,146 @@ public class Connection
 		
 		if(successful && balance)
 		{
-			System.out.println("SUCCESSFUL !!");
+			System.out.println("Get a balance !!");
 			
 			Balance a = gson.fromJson(response, Balance.class);
-			
-			this.setBalance(a.getBalance());
 			
 			return a;
 		}
 		else
 		{
-			System.out.println("FAIL !!");
+			System.out.println("No balance was gotten !!");
 			
 			return null;
 		}
 	}
 	
-	public Payment postPayment() throws IOException, ConnectionNotInitializedException
+	public Object postPayment(String wallet_id, String address, Float amount) throws IOException, ConnectionNotInitializedException
 	{
-		return null;
-	}
-
-	public void setAddress(String address) 
-	{
-		this.address = address;
-	}
-
-	public void setBalance(BigDecimal balance) 
-	{
-		this.balance = balance;
-	}
-
-	public String getAddress()
-	{
-		if (this.address != null)
+		this.setPayment(true);
+		
+			
+		JsonElement addressJson = gson.toJsonTree(address);
+		JsonElement amountJson = gson.toJsonTree(amount);
+		JsonElement greenAddressJson = gson.toJsonTree(true);
+		
+		JsonObject jsonData = new JsonObject();
+		
+		jsonData.add("address", addressJson);
+		jsonData.add("amount", amountJson);
+		
+		if (this.useGreenAddress)
 		{
-			return this.address;
-		}
-		else
-		{
-			return null;
+			jsonData.add("use_green_address", greenAddressJson);
 		}
 		
-	}
-	
-	public BigDecimal getBalance()
-	{
-		if (this.balance != null)
+		Pattern pattern;
+		Matcher matcher;
+		boolean successful;
+		
+		String response = postMethod(Constant.paymentUrl(wallet_id), jsonData);
+		
+		pattern = Pattern.compile("true");
+		matcher = pattern.matcher(response);
+		successful = matcher.find();
+
+		
+		if(successful)
 		{
-			return this.balance;
+			return (gson.fromJson(response, Payment.class));
 		}
 		else
 		{
-			return null;
+			Payment a = gson.fromJson(response, Payment.class);
+			
+			System.out.println("Message code : "+ a.getMessage_code());
+			
+			return a.getMessage();
+			
+			/*if(a.getMessage_code().equals("1"))
+			{
+				System.out.println("The API is currently unavailable.");
+				
+				return "The API is currently unavailable.";
+			}
+			else if (a.getMessage_code().equals("2"))
+			{
+				System.out.println("Please provide a Bitcoin address.");
+				
+				return "Please provide a Bitcoin address.";
+			}
+			else if (a.getMessage_code().equals("3"))
+			{
+				System.out.println("Please specify the amount you would like to send.");
+				
+				return "Please specify the amount you would like to send.";
+			}
+			else if (a.getMessage_code().equals("4"))
+			{
+				System.out.println("Sorry, this does not look like a valid Bitcoin address.");
+				
+				return "Sorry, this does not look like a valid Bitcoin address.";
+			}
+			else if (a.getMessage_code().equals("5"))
+			{
+				System.out.println("Sorry, I was not able to parse the amount field.");
+				
+				return "Sorry, I was not able to parse the amount field.";
+			}
+			else if (a.getMessage_code().equals("6"))
+			{
+				System.out.println("Sorry, currently only amounts of 0.01 BTC and more are supported.");
+				
+				return "Sorry, currently only amounts of 0.01 BTC and more are supported.";
+			}
+			else if (a.getMessage_code().equals("7"))
+			{
+				System.out.println("Use of green address failed - please contact support.");
+				
+				return "Use of green address failed - please contact support.";
+			}
+			else if (a.getMessage_code().equals("8"))
+			{
+				System.out.println("Sorry, I was unable to validate the Bitcoin address.");
+				
+				return "Sorry, I was unable to validate the Bitcoin address.";
+			}
+			else if (a.getMessage_code().equals("-4"))
+			{
+				System.out.println("Sorry, this does not seem to be a valid Bitcoin address.");
+				
+				return "Sorry, this does not seem to be a valid Bitcoin address.";
+			}
+			else if (a.getMessage_code().equals("-6"))
+			{
+				System.out.println("Account has insufficient funds (or not enough confirmations) to complete this action.");
+			
+				return "Account has insufficient funds (or not enough confirmations) to complete this action.";
+			}	*/		
 		}
 	}
+	
+	
+	public boolean isPayment() 
+	{
+		return isPayment;
+	}
+
+	public void setPayment(boolean isPayment) 
+	{
+		this.isPayment = isPayment;
+	}
+
+	public boolean UseGreenAddress() 
+	{
+		return useGreenAddress;
+	}
+
+	public void setUseGreenAddress(boolean useGreenAddress) 
+	{
+		this.useGreenAddress = useGreenAddress;
+	}
+	
 	
 	
 }

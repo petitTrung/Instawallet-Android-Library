@@ -2,7 +2,7 @@ package com.paymium.instawallet.payment;
 
 import com.google.gson.annotations.SerializedName;
 
-public class PaymentParameters 
+public class GreenAddressPayment 
 {
 	@SerializedName("address")
 	private String address;
@@ -15,7 +15,7 @@ public class PaymentParameters
 
 	
 	
-	public PaymentParameters() 
+	public GreenAddressPayment() 
 	{
 		super();
 		// TODO Auto-generated constructor stub
@@ -23,7 +23,7 @@ public class PaymentParameters
 
 
 
-	public PaymentParameters(String address, Float amount, boolean use_green_address) 
+	public GreenAddressPayment(String address, Float amount, boolean use_green_address) 
 	{
 		super();
 		this.address = address;
