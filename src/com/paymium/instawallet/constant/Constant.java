@@ -20,7 +20,7 @@ public final class Constant
 	/** The Constant DELETE. */
 	public final static String DELETE = "DELETE";
 	
-	public final static String backendUrl = "https://www.instawallet.org/api/v1";
+	public final static String backendUrl = "http://instawallet.california.paymium.com/api/v1";
 	
 	public final static String newWalletUrl = backendUrl + "/new_wallet";
 	

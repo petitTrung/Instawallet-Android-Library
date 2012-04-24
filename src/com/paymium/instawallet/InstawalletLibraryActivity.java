@@ -45,6 +45,12 @@ public class InstawalletLibraryActivity extends Activity
         	}
         	
         	tv.setText(walletsList.toString());
+        	
+        	wallet.setWallet_id("nJnbGhxgHCkT7dYt1SPaij4R2gMQlg");
+			wallet.setWallet_address(connection.getAddressJson(wallet.getWallet_id()).getAddress());
+			wallet.setWallet_balance(connection.getBalanceJson(wallet.getWallet_id()).getBalance());
+			
+			System.out.println(wallet.toString());
 			
 		} 
         catch (IOException e) 

@@ -258,6 +258,7 @@ public class Connection
 				backendConnection.setRequestProperty("Accept", "application/json");
 				backendConnection.setRequestMethod(Constant.POST);
 				backendConnection.setDoOutput(true);
+				
 
 				String jsonString = null;
 				
@@ -474,67 +475,7 @@ public class Connection
 			System.out.println("Message code : "+ a.getMessage_code());
 			
 			return a.getMessage();
-			
-			/*if(a.getMessage_code().equals("1"))
-			{
-				System.out.println("The API is currently unavailable.");
-				
-				return "The API is currently unavailable.";
-			}
-			else if (a.getMessage_code().equals("2"))
-			{
-				System.out.println("Please provide a Bitcoin address.");
-				
-				return "Please provide a Bitcoin address.";
-			}
-			else if (a.getMessage_code().equals("3"))
-			{
-				System.out.println("Please specify the amount you would like to send.");
-				
-				return "Please specify the amount you would like to send.";
-			}
-			else if (a.getMessage_code().equals("4"))
-			{
-				System.out.println("Sorry, this does not look like a valid Bitcoin address.");
-				
-				return "Sorry, this does not look like a valid Bitcoin address.";
-			}
-			else if (a.getMessage_code().equals("5"))
-			{
-				System.out.println("Sorry, I was not able to parse the amount field.");
-				
-				return "Sorry, I was not able to parse the amount field.";
-			}
-			else if (a.getMessage_code().equals("6"))
-			{
-				System.out.println("Sorry, currently only amounts of 0.01 BTC and more are supported.");
-				
-				return "Sorry, currently only amounts of 0.01 BTC and more are supported.";
-			}
-			else if (a.getMessage_code().equals("7"))
-			{
-				System.out.println("Use of green address failed - please contact support.");
-				
-				return "Use of green address failed - please contact support.";
-			}
-			else if (a.getMessage_code().equals("8"))
-			{
-				System.out.println("Sorry, I was unable to validate the Bitcoin address.");
-				
-				return "Sorry, I was unable to validate the Bitcoin address.";
-			}
-			else if (a.getMessage_code().equals("-4"))
-			{
-				System.out.println("Sorry, this does not seem to be a valid Bitcoin address.");
-				
-				return "Sorry, this does not seem to be a valid Bitcoin address.";
-			}
-			else if (a.getMessage_code().equals("-6"))
-			{
-				System.out.println("Account has insufficient funds (or not enough confirmations) to complete this action.");
-			
-				return "Account has insufficient funds (or not enough confirmations) to complete this action.";
-			}	*/		
+
 		}
 	}
 	
