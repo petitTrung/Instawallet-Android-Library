@@ -101,7 +101,7 @@ public class WalletsHandler
     }
     
     //---insert a wallet into the database---
-    public void insertBTCAddress(Wallet wallet) 
+    public void addWallet(Wallet wallet) 
     {
 		//System.out.println("PREPARING FOR ADDING A WALLET!!");
 		this.open();
