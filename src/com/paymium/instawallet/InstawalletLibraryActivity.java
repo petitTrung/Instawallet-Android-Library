@@ -1,6 +1,7 @@
 package com.paymium.instawallet;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -30,7 +31,7 @@ public class InstawalletLibraryActivity extends Activity
         
         try 
         {
-        	for (int i = 0 ; i < 5 ; i++)
+        	for (int i = 0 ; i < 3 ; i++)
         	{
         		NewWallet newWallet = connection.createNewWallet();
     			
@@ -47,6 +48,8 @@ public class InstawalletLibraryActivity extends Activity
         	wallet = connection.getWallet("nJnbGhxgHCkT7dYt1SPaij4R2gMQlg");
 			
 			System.out.println(wallet.toString());
+			
+			connection.postPayment("nJnbGhxgHCkT7dYt1SPaij4R2gMQlg","1CSNnXR5sKnYiVszLpTki22UHqA3j1XJWT", new BigDecimal("0.05"));
 			
 		} 
         catch (IOException e) 

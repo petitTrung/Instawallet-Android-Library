@@ -99,7 +99,7 @@ public class Connection
 			if (Integer.parseInt(Build.VERSION.SDK) <= Build.VERSION_CODES.FROYO) 
 			{
 		        System.setProperty("http.keepAlive", "false");
-		        //System.out.println("Android version <= 2.2");
+		        System.out.println("Android version <= 2.2");
 		        
 		        HttpClient http_client = new DefaultHttpClient();
 	        	
@@ -203,6 +203,11 @@ public class Connection
 						HttpPost http_post = new HttpPost(url);
 						http_post.setHeader("Accept", "application/json");
 						http_post.setHeader("Content-Type", "application/json");
+						
+						/*List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
+						nameValuePairs.add(new BasicNameValuePair("address","1CSNnXR5sKnYiVszLpTki22UHqA3j1XJWT"));
+						nameValuePairs.add(new BasicNameValuePair("amount","0.00000005"));	
+						http_post.setEntity(new UrlEncodedFormEntity(nameValuePairs));*/
 
 						//http_post.setHeader("Content-Length", Integer.toString(jsonString.getBytes().length));
 						StringEntity s = new StringEntity(jsonString);
@@ -345,7 +350,7 @@ public class Connection
 		
 		String response = this.postMethod(Constant.newWalletUrl,null);
 		
-		System.out.println(response);
+		//System.out.println(response);
 		
 		pattern = Pattern.compile("true");
 		matcher = pattern.matcher(response);
@@ -449,22 +454,27 @@ public class Connection
 		return wallet;
 	}
 	
-	public Object postPayment(String wallet_id, String address, Float amount) throws IOException, ConnectionNotInitializedException
+	public Object postPayment(String wallet_id, String address, BigDecimal amount) throws IOException, ConnectionNotInitializedException
 	{
 		this.setPayment(true);
 		
-			
+		BigDecimal amountSatoshis = amount.multiply(new BigDecimal(Math.pow(10, 8)));
+		
+		
 		JsonElement addressJson = gson.toJsonTree(address);
-		JsonElement amountJson = gson.toJsonTree(amount);
-		JsonElement greenAddressJson = gson.toJsonTree(true);
+		JsonElement amountJson = gson.toJsonTree(String.valueOf(amountSatoshis));
+		
 		
 		JsonObject jsonData = new JsonObject();
 		
 		jsonData.add("address", addressJson);
-		jsonData.add("amount", amountJson);
+		jsonData.add("amount", amountJson);;
+		
+		System.out.println(jsonData.toString());
 		
 		if (this.useGreenAddress)
 		{
+			JsonElement greenAddressJson = gson.toJsonTree(true);
 			jsonData.add("use_green_address", greenAddressJson);
 		}
 		
@@ -474,6 +484,8 @@ public class Connection
 		
 		String response = postMethod(Constant.paymentUrl(wallet_id), jsonData);
 		
+		System.out.println("Payment result : " + response);
+		
 		pattern = Pattern.compile("true");
 		matcher = pattern.matcher(response);
 		successful = matcher.find();
@@ -481,23 +493,25 @@ public class Connection
 		
 		if(successful)
 		{
-			return (gson.fromJson(response, Payment.class));
+			return (this.gson.fromJson(response, Payment.class));
 		}
 		else
 		{
-			Payment a = gson.fromJson(response, Payment.class);
+			Payment a = this.gson.fromJson(response, Payment.class);
 			
-			System.out.println("Message code : "+ a.getMessage_code());
+			System.out.println("Message code : " + a.getMessage_code());
+			
+			System.out.println("Message      : " + a.getMessage());
 			
 			return a.getMessage();
 
 		}
 	}
 	
-	
+
 	public boolean isPayment() 
 	{
-		return isPayment;
+		return this.isPayment;
 	}
 
 	public void setPayment(boolean isPayment) 
@@ -507,7 +521,7 @@ public class Connection
 
 	public boolean UseGreenAddress() 
 	{
-		return useGreenAddress;
+		return this.useGreenAddress;
 	}
 
 	public void setUseGreenAddress(boolean useGreenAddress) 

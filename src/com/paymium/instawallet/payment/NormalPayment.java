@@ -1,5 +1,7 @@
 package com.paymium.instawallet.payment;
 
+import java.math.BigDecimal;
+
 import com.google.gson.annotations.SerializedName;
 
 public class NormalPayment 
@@ -8,7 +10,7 @@ public class NormalPayment
 	private String address;
 	
 	@SerializedName("amount")
-	private Float amount;
+	private BigDecimal amount;
 
 	public NormalPayment() 
 	{
@@ -16,7 +18,7 @@ public class NormalPayment
 		// TODO Auto-generated constructor stub
 	}
 
-	public NormalPayment(String address, Float amount) 
+	public NormalPayment(String address, BigDecimal amount) 
 	{
 		super();
 		this.address = address;
@@ -33,12 +35,12 @@ public class NormalPayment
 		this.address = address;
 	}
 
-	public Float getAmount() 
+	public BigDecimal getAmount() 
 	{
 		return amount;
 	}
 
-	public void setAmount(Float amount) 
+	public void setAmount(BigDecimal amount) 
 	{
 		this.amount = amount;
 	}

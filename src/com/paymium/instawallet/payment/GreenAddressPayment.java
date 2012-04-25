@@ -1,5 +1,7 @@
 package com.paymium.instawallet.payment;
 
+import java.math.BigDecimal;
+
 import com.google.gson.annotations.SerializedName;
 
 public class GreenAddressPayment 
@@ -8,7 +10,7 @@ public class GreenAddressPayment
 	private String address;
 	
 	@SerializedName("amount")
-	private Float amount;
+	private BigDecimal amount;
 	
 	@SerializedName("use_green_address")
 	private boolean use_green_address;
@@ -23,7 +25,7 @@ public class GreenAddressPayment
 
 
 
-	public GreenAddressPayment(String address, Float amount, boolean use_green_address) 
+	public GreenAddressPayment(String address, BigDecimal amount, boolean use_green_address) 
 	{
 		super();
 		this.address = address;
@@ -35,7 +37,7 @@ public class GreenAddressPayment
 
 	public String getAddress() 
 	{
-		return address;
+		return this.address;
 	}
 
 
@@ -47,14 +49,14 @@ public class GreenAddressPayment
 
 
 
-	public Float getAmount() 
+	public BigDecimal getAmount() 
 	{
-		return amount;
+		return this.amount;
 	}
 
 
 
-	public void setAmount(Float amount) 
+	public void setAmount(BigDecimal amount) 
 	{
 		this.amount = amount;
 	}
@@ -63,7 +65,7 @@ public class GreenAddressPayment
 
 	public boolean isUse_green_address() 
 	{
-		return use_green_address;
+		return this.use_green_address;
 	}
 
 
