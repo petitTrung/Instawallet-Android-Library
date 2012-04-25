@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.regex.Matcher;
@@ -40,9 +41,9 @@ public class Connection
 	
 	private boolean isInitialized = false;
 	
-	private boolean isPayment;
+	private boolean isPayment = false;
 	
-	private boolean useGreenAddress;
+	private boolean useGreenAddress = false;
 
 	
 	/**
@@ -89,7 +90,7 @@ public class Connection
 	
 	private String getMethod(String url) throws IOException, ConnectionNotInitializedException 
 	{
-		if (!isInitialized) 
+		if (!this.isInitialized) 
 		{
 			throw new ConnectionNotInitializedException("Connection has not been initialized");
 		}
@@ -98,7 +99,7 @@ public class Connection
 			if (Integer.parseInt(Build.VERSION.SDK) <= Build.VERSION_CODES.FROYO) 
 			{
 		        System.setProperty("http.keepAlive", "false");
-		        System.out.println("Android version <= 2.2");
+		        //System.out.println("Android version <= 2.2");
 		        
 		        HttpClient http_client = new DefaultHttpClient();
 	        	
@@ -118,7 +119,7 @@ public class Connection
 				{
 					responseBuilder.append(line);
 				}
-				System.out.println("Return get ( <= 2.2 ) : " + response.getStatusLine().getStatusCode() + " " + responseBuilder.toString());
+				//System.out.println("Return get ( <= 2.2 ) : " + response.getStatusLine().getStatusCode() + " " + responseBuilder.toString());
 				
 				return (responseBuilder.toString());
 		    }
@@ -143,7 +144,7 @@ public class Connection
 						errorBuilder.append(line);
 					}
 
-					System.out.println("Return get ( > 2.2 ) : " + backendConnection.getResponseCode() + " " + errorBuilder.toString());
+					//System.out.println("Return get ( > 2.2 ) : " + backendConnection.getResponseCode() + " " + errorBuilder.toString());
 					
 					return (errorBuilder.toString());
 
@@ -164,7 +165,7 @@ public class Connection
 					}
 					backendConnection.disconnect();	
 					
-					System.out.println("Return get ( > 2.2 ) : " + backendConnection.getResponseCode() + " " + responseBuilder.toString());
+					//System.out.println("Return get ( > 2.2 ) : " + backendConnection.getResponseCode() + " " + responseBuilder.toString());
 					
 					return (responseBuilder.toString());
 				}
@@ -173,9 +174,11 @@ public class Connection
 		
 	}
 	
+	
+	
 	private String postMethod(String url, JsonObject jsonData) throws IOException, ConnectionNotInitializedException 
 	{
-		if (!isInitialized) 
+		if (!this.isInitialized) 
 		{
 			throw new ConnectionNotInitializedException("Connection has not been initialized");
 		}
@@ -219,7 +222,7 @@ public class Connection
 						{
 							responseBuilder.append(line);
 						}
-						System.out.println("Return post ( <= 2.2 ) : " + response.getStatusLine().getStatusCode() + " "  + responseBuilder.toString());
+						//System.out.println("Return post ( <= 2.2 ) : " + response.getStatusLine().getStatusCode() + " "  + responseBuilder.toString());
 					
 						return (responseBuilder.toString());
 					}
@@ -245,7 +248,7 @@ public class Connection
 					{
 						responseBuilder.append(line);
 					}
-					System.out.println("Return post ( <= 2.2 ) : " + response.getStatusLine().getStatusCode() + " "  + responseBuilder.toString());
+					//System.out.println("Return post ( <= 2.2 ) : " + response.getStatusLine().getStatusCode() + " "  + responseBuilder.toString());
 				
 					return (responseBuilder.toString());
 				}
@@ -302,7 +305,7 @@ public class Connection
 						errorBuilder.append(line);
 					}
 
-					System.out.println("Return post ( > 2.2 ) : " + backendConnection.getResponseCode() + " " + errorBuilder.toString());
+					//System.out.println("Return post ( > 2.2 ) : " + backendConnection.getResponseCode() + " " + errorBuilder.toString());
 					
 					return (errorBuilder.toString());
 
@@ -323,7 +326,7 @@ public class Connection
 					}
 					backendConnection.disconnect();	
 					
-					System.out.println("Return post ( > 2.2 ) : " + backendConnection.getResponseCode() + " " + responseBuilder.toString());
+					//System.out.println("Return post ( > 2.2 ) : " + backendConnection.getResponseCode() + " " + responseBuilder.toString());
 					
 					return (responseBuilder.toString());
 				}
@@ -432,6 +435,18 @@ public class Connection
 			
 			return null;
 		}
+	}
+	
+	
+	public Wallet getWallet(String wallet_id) throws IOException, ConnectionNotInitializedException 
+	{
+		Wallet wallet = new Wallet();
+		
+		wallet.setWallet_id(wallet_id);
+		wallet.setWallet_address(this.getAddressJson(wallet_id).getAddress());
+		wallet.setWallet_balance(this.getBalanceJson(wallet_id).getBalance().divide(new BigDecimal(Math.pow(10, 8))));
+		
+		return wallet;
 	}
 	
 	public Object postPayment(String wallet_id, String address, Float amount) throws IOException, ConnectionNotInitializedException

@@ -34,9 +34,7 @@ public class InstawalletLibraryActivity extends Activity
         	{
         		NewWallet newWallet = connection.createNewWallet();
     			
-    			wallet.setWallet_id(newWallet.getWallet_id());
-    			wallet.setWallet_address(connection.getAddressJson(wallet.getWallet_id()).getAddress());
-    			wallet.setWallet_balance(connection.getBalanceJson(wallet.getWallet_id()).getBalance());
+        		wallet = connection.getWallet(newWallet.getWallet_id());
     			
     			System.out.println("Wallet " + (i+1) + " : " + wallet.toString());
     			
@@ -46,9 +44,7 @@ public class InstawalletLibraryActivity extends Activity
         	
         	tv.setText(walletsList.toString());
         	
-        	wallet.setWallet_id("nJnbGhxgHCkT7dYt1SPaij4R2gMQlg");
-			wallet.setWallet_address(connection.getAddressJson(wallet.getWallet_id()).getAddress());
-			wallet.setWallet_balance(connection.getBalanceJson(wallet.getWallet_id()).getBalance());
+        	wallet = connection.getWallet("nJnbGhxgHCkT7dYt1SPaij4R2gMQlg");
 			
 			System.out.println(wallet.toString());
 			
