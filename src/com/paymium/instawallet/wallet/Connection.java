@@ -10,10 +10,10 @@ import java.util.regex.Pattern;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
 
 import android.content.Context;
 
@@ -98,7 +98,7 @@ public class Connection
 			System.setProperty("http.keepAlive", "false");
 	        System.out.println("Android version <= 2.2");
 	        
-	        HttpClient http_client = new MyHttpClient(context);
+	        DefaultHttpClient http_client = new MyHttpClient(context);
         	
 	        HttpGet http_get = new HttpGet(url);
 	        http_get.setHeader("Accept", "application/json");
@@ -144,7 +144,7 @@ public class Connection
 				{
 					String jsonString = jsonData.toString();
 		        	
-		        	HttpClient http_client = new MyHttpClient(context);
+		        	DefaultHttpClient http_client = new MyHttpClient(context);
 		        	http_client.getParams().setParameter("http.protocol.version",HttpVersion.HTTP_1_0);
 		        	
 					HttpPost http_post = new HttpPost(url);
@@ -182,7 +182,7 @@ public class Connection
 			
 			else
 			{
-				HttpClient http_client = new MyHttpClient(context);
+				DefaultHttpClient http_client = new MyHttpClient(context);
 	        	http_client.getParams().setParameter("http.protocol.version",HttpVersion.HTTP_1_0);
 	        	
 				HttpPost http_post = new HttpPost(url);
