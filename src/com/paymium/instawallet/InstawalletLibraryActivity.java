@@ -27,7 +27,7 @@ public class InstawalletLibraryActivity extends Activity
         Wallet wallet = new Wallet();
         WalletsList walletsList = new WalletsList();
         
-        Connection connection = Connection.getInstance().initialize();
+        Connection connection = Connection.getInstance().initialize(this);
         
         try 
         {

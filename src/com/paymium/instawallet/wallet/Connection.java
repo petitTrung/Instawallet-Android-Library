@@ -1,13 +1,10 @@
 package com.paymium.instawallet.wallet;
 
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,14 +14,14 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
 
-import android.os.Build;
+import android.content.Context;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.paymium.instawallet.connection.MyHttpClient;
 import com.paymium.instawallet.constant.Constant;
 import com.paymium.instawallet.exception.ConnectionNotInitializedException;
 import com.paymium.instawallet.json.Address;
@@ -43,7 +40,7 @@ public class Connection
 	
 	private boolean isPayment = false;
 	
-	private boolean useGreenAddress = false;
+	private Context context;
 
 	
 	/**
@@ -76,12 +73,14 @@ public class Connection
 		return Connection.instance;
 	}
 
-	public Connection initialize()
+	public Connection initialize(Context context)
 	{
 		GsonBuilder gsonBuilder = new GsonBuilder();
 
 		// TODO : Handle timezones properly
 		this.gson = gsonBuilder.setDateFormat("yyyy-MM-dd'T'HH:mm:ss").create();
+		
+		this.context = context;
 
 		this.isInitialized = true;
 
@@ -96,80 +95,31 @@ public class Connection
 		}
 		else
 		{
-			if (Integer.parseInt(Build.VERSION.SDK) <= Build.VERSION_CODES.FROYO) 
+			System.setProperty("http.keepAlive", "false");
+	        System.out.println("Android version <= 2.2");
+	        
+	        HttpClient http_client = new MyHttpClient(context);
+        	
+	        HttpGet http_get = new HttpGet(url);
+	        http_get.setHeader("Accept", "application/json");
+
+	        
+	        HttpResponse response = http_client.execute(http_get);
+			InputStream content = response.getEntity().getContent();
+			
+			BufferedReader responseReader = new BufferedReader(new InputStreamReader(content));
+			
+			StringBuilder responseBuilder = new StringBuilder();
+			String line = null;
+			
+			while ((line = responseReader.readLine()) != null) 
 			{
-		        System.setProperty("http.keepAlive", "false");
-		        System.out.println("Android version <= 2.2");
-		        
-		        HttpClient http_client = new DefaultHttpClient();
-	        	
-		        HttpGet http_get = new HttpGet(url);
-		        http_get.setHeader("Accept", "application/json");
-
-		        
-		        HttpResponse response = http_client.execute(http_get);
-				InputStream content = response.getEntity().getContent();
-				
-				BufferedReader responseReader = new BufferedReader(new InputStreamReader(content));
-				
-				StringBuilder responseBuilder = new StringBuilder();
-				String line = null;
-				
-				while ((line = responseReader.readLine()) != null) 
-				{
-					responseBuilder.append(line);
-				}
-				//System.out.println("Return get ( <= 2.2 ) : " + response.getStatusLine().getStatusCode() + " " + responseBuilder.toString());
-				
-				return (responseBuilder.toString());
-		    }
-			else
-			{
-				URL requestURL = new URL(url);
-				HttpURLConnection backendConnection = (HttpURLConnection) requestURL.openConnection();
-
-				backendConnection.setRequestProperty("Accept", "application/json");
-				backendConnection.setRequestMethod(Constant.GET);
-				
-				if (backendConnection.getResponseCode() > 400)
-				{
-					InputStream errorStream = backendConnection.getErrorStream();
-					BufferedReader errorReader = new BufferedReader(new InputStreamReader(errorStream));
-					
-					StringBuilder errorBuilder = new StringBuilder();
-					String line = null;
-					
-					while ((line = errorReader.readLine()) != null) 
-					{
-						errorBuilder.append(line);
-					}
-
-					//System.out.println("Return get ( > 2.2 ) : " + backendConnection.getResponseCode() + " " + errorBuilder.toString());
-					
-					return (errorBuilder.toString());
-
-				}
-				
-				else
-				{
-					backendConnection.connect();
-					InputStream responseStream = (InputStream) backendConnection.getInputStream();
-					BufferedReader responseReader = new BufferedReader(new InputStreamReader(responseStream));
-
-					StringBuilder responseBuilder = new StringBuilder();
-					String line = null;
-					
-					while ((line = responseReader.readLine()) != null) 
-					{
-						responseBuilder.append(line);
-					}
-					backendConnection.disconnect();	
-					
-					//System.out.println("Return get ( > 2.2 ) : " + backendConnection.getResponseCode() + " " + responseBuilder.toString());
-					
-					return (responseBuilder.toString());
-				}
+				responseBuilder.append(line);
 			}
+			//System.out.println("Return get ( <= 2.2 ) : " + response.getStatusLine().getStatusCode() + " " + responseBuilder.toString());
+			
+			return (responseBuilder.toString());
+    
 		}
 		
 	}
@@ -184,62 +134,33 @@ public class Connection
 		}
 		else
 		{
-			System.out.println("URL : " + url);
-			if (Integer.parseInt(Build.VERSION.SDK) <= Build.VERSION_CODES.FROYO) 
+			if (this.isPayment) 
 			{
-				if (this.isPayment) 
+				if (jsonData == null) 
 				{
-					if (jsonData == null) 
-					{
-						throw new IllegalArgumentException("Cannot POST payment with empty body");
-					}
-					else
-					{
-						String jsonString = jsonData.toString();
-			        	
-			        	HttpClient http_client = new DefaultHttpClient();
-			        	http_client.getParams().setParameter("http.protocol.version",HttpVersion.HTTP_1_0);
-			        	
-						HttpPost http_post = new HttpPost(url);
-						http_post.setHeader("Accept", "application/json");
-						http_post.setHeader("Content-Type", "application/json");
-						
-						/*List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
-						nameValuePairs.add(new BasicNameValuePair("address","1CSNnXR5sKnYiVszLpTki22UHqA3j1XJWT"));
-						nameValuePairs.add(new BasicNameValuePair("amount","0.00000005"));	
-						http_post.setEntity(new UrlEncodedFormEntity(nameValuePairs));*/
-
-						//http_post.setHeader("Content-Length", Integer.toString(jsonString.getBytes().length));
-						StringEntity s = new StringEntity(jsonString);
-						s.setContentType("application/json");
-						http_post.setEntity(s);
-
-				
-						HttpResponse response = http_client.execute(http_post);
-						InputStream content = response.getEntity().getContent();
-						
-						BufferedReader responseReader = new BufferedReader(new InputStreamReader(content));
-						
-						StringBuilder responseBuilder = new StringBuilder();
-						String line = null;
-						
-						while ((line = responseReader.readLine()) != null) 
-						{
-							responseBuilder.append(line);
-						}
-						//System.out.println("Return post ( <= 2.2 ) : " + response.getStatusLine().getStatusCode() + " "  + responseBuilder.toString());
-					
-						return (responseBuilder.toString());
-					}
+					throw new IllegalArgumentException("Cannot POST payment with empty body");
 				}
-				
 				else
 				{
-					HttpClient http_client = new DefaultHttpClient();
+					String jsonString = jsonData.toString();
+		        	
+		        	HttpClient http_client = new MyHttpClient(context);
 		        	http_client.getParams().setParameter("http.protocol.version",HttpVersion.HTTP_1_0);
 		        	
 					HttpPost http_post = new HttpPost(url);
 					http_post.setHeader("Accept", "application/json");
+					http_post.setHeader("Content-Type", "application/json");
+					
+					/*List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
+					nameValuePairs.add(new BasicNameValuePair("address","1CSNnXR5sKnYiVszLpTki22UHqA3j1XJWT"));
+					nameValuePairs.add(new BasicNameValuePair("amount","0.00000005"));	
+					http_post.setEntity(new UrlEncodedFormEntity(nameValuePairs));*/
+
+					//http_post.setHeader("Content-Length", Integer.toString(jsonString.getBytes().length));
+					StringEntity s = new StringEntity(jsonString);
+					s.setContentType("application/json");
+					http_post.setEntity(s);
+
 			
 					HttpResponse response = http_client.execute(http_post);
 					InputStream content = response.getEntity().getContent();
@@ -258,84 +179,31 @@ public class Connection
 					return (responseBuilder.toString());
 				}
 			}
+			
 			else
 			{
-				URL requestURL = new URL(url);
-				HttpURLConnection backendConnection = (HttpURLConnection) requestURL.openConnection();
-
-				backendConnection.setRequestProperty("Accept", "application/json");
-				backendConnection.setRequestMethod(Constant.POST);
-				backendConnection.setDoOutput(true);
+				HttpClient http_client = new MyHttpClient(context);
+	        	http_client.getParams().setParameter("http.protocol.version",HttpVersion.HTTP_1_0);
+	        	
+				HttpPost http_post = new HttpPost(url);
+				http_post.setHeader("Accept", "application/json");
+		
+				HttpResponse response = http_client.execute(http_post);
+				InputStream content = response.getEntity().getContent();
 				
-
-				String jsonString = null;
+				BufferedReader responseReader = new BufferedReader(new InputStreamReader(content));
 				
-				if(this.isPayment)
+				StringBuilder responseBuilder = new StringBuilder();
+				String line = null;
+				
+				while ((line = responseReader.readLine()) != null) 
 				{
-					if (jsonData == null) 
-					{
-						throw new IllegalArgumentException("Cannot POST payment with empty body");
-					}
-					else
-					{
-						jsonString = jsonData.toString();
-						
-						backendConnection.setDoOutput(true);
-						backendConnection.setRequestProperty("Content-Type", "application/json");
-						backendConnection.setRequestProperty("Content-Length", Integer.toString(jsonString.getBytes().length));
-
-					}
+					responseBuilder.append(line);
 				}
-				
-				// Send request
-				if(this.isPayment)
-				{
-					DataOutputStream dataOutputStream = new DataOutputStream(backendConnection.getOutputStream());
-					dataOutputStream.writeBytes(jsonString);
-					dataOutputStream.flush();
-					dataOutputStream.close();
-				}
-				
-				
-				if (backendConnection.getResponseCode() > 400)
-				{
-					InputStream errorStream = backendConnection.getErrorStream();
-					BufferedReader errorReader = new BufferedReader(new InputStreamReader(errorStream));
-					
-					StringBuilder errorBuilder = new StringBuilder();
-					String line = null;
-					
-					while ((line = errorReader.readLine()) != null) 
-					{
-						errorBuilder.append(line);
-					}
-
-					//System.out.println("Return post ( > 2.2 ) : " + backendConnection.getResponseCode() + " " + errorBuilder.toString());
-					
-					return (errorBuilder.toString());
-
-				}
-				
-				else
-				{
-					backendConnection.connect();
-					InputStream responseStream = (InputStream) backendConnection.getInputStream();
-					BufferedReader responseReader = new BufferedReader(new InputStreamReader(responseStream));
-
-					StringBuilder responseBuilder = new StringBuilder();
-					String line = null;
-					
-					while ((line = responseReader.readLine()) != null) 
-					{
-						responseBuilder.append(line);
-					}
-					backendConnection.disconnect();	
-					
-					//System.out.println("Return post ( > 2.2 ) : " + backendConnection.getResponseCode() + " " + responseBuilder.toString());
-					
-					return (responseBuilder.toString());
-				}
-			}
+				//System.out.println("Return post ( <= 2.2 ) : " + response.getStatusLine().getStatusCode() + " "  + responseBuilder.toString());
+			
+				return (responseBuilder.toString());
+			}	
 		}
 	}
 
@@ -472,12 +340,6 @@ public class Connection
 		
 		System.out.println(jsonData.toString());
 		
-		if (this.useGreenAddress)
-		{
-			JsonElement greenAddressJson = gson.toJsonTree(true);
-			jsonData.add("use_green_address", greenAddressJson);
-		}
-		
 		Pattern pattern;
 		Matcher matcher;
 		boolean successful;
@@ -519,16 +381,4 @@ public class Connection
 		this.isPayment = isPayment;
 	}
 
-	public boolean UseGreenAddress() 
-	{
-		return this.useGreenAddress;
-	}
-
-	public void setUseGreenAddress(boolean useGreenAddress) 
-	{
-		this.useGreenAddress = useGreenAddress;
-	}
-	
-	
-	
 }
